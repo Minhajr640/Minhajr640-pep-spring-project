@@ -10,35 +10,51 @@ import com.example.exception.UsernameExistsException;
 @Service
 public class AccountService {
 
+    /**Fields */
     private final  AccountRepository accountRepository;
 
+    /**All Args Constructor */
     @Autowired
     public AccountService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
     }
 
-    public Account saveAccount(Account account) throws InvalidInputException, UsernameExistsException{
-        if(account.getUsername() == null || account.getPassword() == null || account.getPassword().length() < 4) {
-            throw new InvalidInputException("Invalid Inputs. Try Again");
-        } else if(accountRepository.findByUsername(account.getUsername()) != null) {
+    /**
+     * This is a service layer method to save a new account into database.
+     * @param account
+     * @return An instance of an account that has been saved in the database.
+     * @throws UsernameExistsException If username already exists in the database.
+     */
+    public Account saveAccount(Account account) throws UsernameExistsException{
+        if(accountRepository.findByUsername(account.getUsername()) != null) {
             throw new UsernameExistsException("Username Already Exists");
         } else {
             return accountRepository.save(account);
         }
     }
 
-    public Account getAccount(Account account) throws InvalidInputException {
+    /**
+     * This is a service layer method to retrieve an instance of an account provided only username
+     * and password which is extracted from request body in controller layer.
+     * @param account
+     * @return An instance of an existing account.
+     */
+    public Account getAccount(Account account){
         Account existingAccount;
-        if(accountRepository.existsByUsername(account.getUsername())) {
-            existingAccount = accountRepository.findByUsername(account.getUsername());
-            if(existingAccount.getUsername().equals(account.getUsername()) &&
-            existingAccount.getPassword().equals(account.getPassword())) {
-                return existingAccount;
-            } else {
-                throw new InvalidInputException("null");
-            }
+        existingAccount = accountRepository.findByUsername(account.getUsername());
+        if(existingAccount != null) {
+            return existingAccount;
         } else {
-            throw new InvalidInputException("null");
+            return null;
         }
-    }    
+    }
+    
+    /**
+    * This is a service layer method to check if an accountId exists in database.
+     * @param messageid
+     * @return Boolean true if accountId exists, otherwise will return false.
+     */
+    public Boolean existsById(Integer accountId) {
+        return accountRepository.existsById(accountId);
+    }
 }

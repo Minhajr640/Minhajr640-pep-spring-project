@@ -2,52 +2,48 @@ package com.example.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.example.entity.Account;
 import com.example.entity.Message;
-import com.example.exception.InvalidInputException;
 import com.example.repository.MessageRepository;
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.transaction.annotation.Transactional;
-
 import com.example.repository.AccountRepository;
  
 
 @Service
-//@AllArgsConstructor
 public class MessageService {
-
-    //private final MessageRepository messageRepository;
-    //private final AccountRepository accountRepository;
-
+    /**Fields*/
     private MessageRepository messageRepository;
     private AccountRepository accountRepository;
 
+    /**All Args Constructor */
     @Autowired
     private MessageService(MessageRepository messageRepository, AccountRepository accountRepository) {
         this.messageRepository = messageRepository;
         this.accountRepository = accountRepository;
     }
-    //you shouldn't need to autowire messagerepository if you use @allargscontrustor.
 
-    //requirement asks to return message with generated id
-    //will using .save(message) to return message instance return message with generated messageId?
-    public Message saveMessage(Message message) throws InvalidInputException {
-        //Account existingAccount = accountRepository.getById(message.getPostedBy());
-        if(accountRepository.existsById(message.getPostedBy())
-        && message.getMessageText().length() <255 
-        && !message.getMessageText().isEmpty()) {
-            return messageRepository.save(message);
-        } else {
-            throw new InvalidInputException("You Must Have Account to post Message. Message must be less than 255 characters.");
-        }
+    /**
+     * This is a service layer method to save a message in database.
+     * @param message
+     * @return An instance of a message that has been saved to database.
+     */
+    public Message saveMessage(Message message){
+        return messageRepository.save(message);   
     }
     
+    /**
+     * This is a service layer method to retrieve all messages.
+     * @return A list of all messages.
+     */
     public List<Message> getAllMessages() {
         return messageRepository.findAll();
     }
 
+    /**
+     * This is a service layer method to retrieve a message by Id.
+     * @param messageId
+     * @return An instance of the method if found.
+     */
     public Message getMessageById(Integer messageId) {
         Optional<Message> foundMessageOps;
         Message foundMessage;
@@ -59,8 +55,11 @@ public class MessageService {
         return foundMessage;
     }
 
-    //is my method of returning 1 for rows updated valid??
-    //after deleteById should i use getMessageById to check if message is null;
+    /**
+     * This is a service layer method to delete a message from database by Id.
+     * @param messageId
+     * @return An integer value of 1 if message was deleted indicating a row was updated or 0 if message not found.
+     */
     public Integer deleteMessageById(Integer messageId){
         if(messageRepository.existsById(messageId)) {
             return messageRepository.deleteByIdAndReturnCount(messageId);
@@ -68,48 +67,40 @@ public class MessageService {
         return 0;
     }
 
-    //?
-    // public Integer updateMessageById(Integer messageId, String message_text) throws InvalidInputException {
-    //     Message messageToUpdate;
-    //     if(!messageRepository.existsById(messageId)) {
-    //         messageToUpdate = messageRepository.getById(messageId);
-    //         if(!message_text.trim().isEmpty() && message_text.length()< 255){
-    //         messageToUpdate.setMessageText(message_text);
-    //         messageRepository.save(messageToUpdate);
-    //         return 1;
-    //         }
-    //         else {
-    //             throw new InvalidInputException("MessageId must exist for update and message text can not be empty or over 255 characters");
-    //         }
-    //     } else {
-    //         throw new InvalidInputException("MessageId must exist for update and message text can not be empty or over 255 characters");
-    //     }
-    // }
-
-    public Integer updateMessageById(Integer messageId, String message_text) throws InvalidInputException {
+    /**
+     * This is a service layer method to update a message by Id.
+     * @param messageId
+     * @param message_text
+     * @return Integer value of 1 if message was successfully updated indicating a row was updated.
+     */
+    public Integer updateMessageById(Integer messageId, String message_text) {
         Message messageToUpdate;
-        if(!messageRepository.existsById(messageId)) {
-            throw new InvalidInputException("MessageId must exist for update.");
-        } 
-        if(message_text == null ||message_text.trim().isEmpty()){
-            throw new InvalidInputException("Message text can not be empty or over 255 characters");
-        } else if(message_text.length()> 255) {
-            throw new InvalidInputException("Message text can not be empty or over 255 characters");
-        }
         messageToUpdate = messageRepository.getById(messageId);
         messageToUpdate.setMessageText(message_text);
         messageRepository.save(messageToUpdate);
         return 1;
     }
 
-
-
-    public List<Message> getMessagesByAccountId(Integer accountId) throws InvalidInputException {
+    /**
+     * This is a service layer method to get all messages of an account.
+     * @param accountId
+     * @return A list of messages from an account if provided accountId exists.
+     */
+    public List<Message> getMessagesByAccountId(Integer accountId){
         if(accountRepository.existsById(accountId)) {
             return messageRepository.getAllMessagesByAccountId(accountId);
         } else {
-            throw new InvalidInputException("Account Does Not Exist.");
+            return null;
         }
+    }
+
+   /**
+    * This is a service layer method to check if a messageId exists in database.
+     * @param messageid
+     * @return Boolean true if messageId exists, otherwise will return false.
+     */
+     public Boolean existsById(Integer messageid) {
+        return messageRepository.existsById(messageid);
     }
 }
 
