@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.entity.Account;
@@ -27,6 +26,12 @@ import com.example.service.MessageService;
  * where applicable as well as the @ResponseBody and @PathVariable annotations. You should
  * refer to prior mini-project labs and lecture materials for guidance on how a controller may be built.
  */
+
+
+/** 
+ * Exceptions are used throughout the controller layer instead of null return values since this is typically
+ * a good way to handle unexpected events.
+*/
 @RestController
 public class SocialMediaController {
 
@@ -43,13 +48,17 @@ public class SocialMediaController {
 
     /**
      * This is a handler method to process POST requests to "register" endpoint.
+     * The UsernameExistsException is handled within the method instead of using @ExceptionHandler since this is 
+     * the only method where this exception can occur and centralizing the exception would be redundant.
      * @param account
-     * @return A JSON representation of a new account persisted to database if criteras are met along with HTTP status code 400.
+     * @return A JSON representation of a new account persisted to database if criterias are met along with 
+     * HTTP status code 400.
      * Will return HTTP status code 409 if username already exists to avoid duplicate usernames.
-     * @throws InvalidInputException If criterias for username and password are not met excpetion is thrown and HTTP status code 400 is returned.
+     * @throws InvalidInputException If criterias for username and password are not met exception is thrown 
+     * and HTTP status code 400 is returned.
      */
     @PostMapping("register")
-    public @ResponseBody ResponseEntity<Account> createAccount(@RequestBody Account account) throws InvalidInputException {
+    public ResponseEntity<Account> createAccount(@RequestBody Account account) throws InvalidInputException {
         if(account.getUsername() == null || account.getPassword() == null || account.getPassword().length() < 4) {
             throw new InvalidInputException("Invalid Inputs.");
         } try {
@@ -67,7 +76,7 @@ public class SocialMediaController {
      * Otherwise, will return HTTP status code 401(UNAUTHORIZED).
      */
     @PostMapping("login")
-    public @ResponseBody ResponseEntity<Account> loginAccount(@RequestBody Account account) {
+    public ResponseEntity<Account> loginAccount(@RequestBody Account account) {
             Account matchedAccount = accountService.getAccount(account);
             if(matchedAccount == null){
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -88,7 +97,7 @@ public class SocialMediaController {
      * HTTP status code 400 is returned.
      */
     @PostMapping("messages")
-    public @ResponseBody ResponseEntity<Message> createMessage(@RequestBody Message message) throws InvalidInputException {
+    public ResponseEntity<Message> createMessage(@RequestBody Message message) throws InvalidInputException {
         if(accountService.existsById(message.getPostedBy())
         && message.getMessageText().length() <255
         && !message.getMessageText().isEmpty()) {
@@ -103,7 +112,7 @@ public class SocialMediaController {
      * @return A JSON representation of all messages with HTTP status 200.
      */
     @GetMapping("messages")
-    public @ResponseBody ResponseEntity<List<Message>> getMessages() {
+    public ResponseEntity<List<Message>> getMessages() {
         List<Message> allMessages = messageService.getAllMessages();
         return new ResponseEntity<>(allMessages, HttpStatus.OK);
     }
@@ -114,7 +123,7 @@ public class SocialMediaController {
      * @return A JSON representation of a Message object and HTTP status 200 if message found or not found.
      */
     @GetMapping("messages/{messageId}")
-    public @ResponseBody ResponseEntity<Message> getMessageById(@PathVariable Integer messageId) {
+    public ResponseEntity<Message> getMessageById(@PathVariable Integer messageId) {
         Message foundMessage = messageService.getMessageById(messageId);
         if(foundMessage == null) {
             return new ResponseEntity<>(HttpStatus.OK);
@@ -130,7 +139,7 @@ public class SocialMediaController {
      * and will return HTTP status 200 in both cases. 
      */
     @DeleteMapping("messages/{messageId}")
-    public @ResponseBody ResponseEntity<Integer> deleteMessageById(@PathVariable Integer messageId) {
+    public ResponseEntity<Integer> deleteMessageById(@PathVariable Integer messageId) {
         Integer rowsUpdated = messageService.deleteMessageById(messageId);
         if(rowsUpdated == 0) {
             return new ResponseEntity<>(HttpStatus.OK);
@@ -147,7 +156,7 @@ public class SocialMediaController {
      * Will return HTTP status 400 if exception is thrown.
      */
     @PatchMapping("messages/{messageId}")
-    public @ResponseBody ResponseEntity<Integer> updateMessageById(@PathVariable Integer messageId, @RequestBody Message message) throws InvalidInputException{
+    public ResponseEntity<Integer> updateMessageById(@PathVariable Integer messageId, @RequestBody Message message) throws InvalidInputException{
         if(!messageService.existsById(messageId)) {
             throw new InvalidInputException("Message Id not found.");
         }
@@ -168,7 +177,7 @@ public class SocialMediaController {
      * @return A JSON representation of a list of messages from provided accountId if exists any and HTTP status 200 in either case.
      */
     @GetMapping("accounts/{accountId}/messages") 
-    public @ResponseBody ResponseEntity<List<Message>> getMessagesByAccountId(@PathVariable Integer accountId) {
+    public ResponseEntity<List<Message>> getMessagesByAccountId(@PathVariable Integer accountId) {
         List<Message> messagesOfAccount = messageService.getMessagesByAccountId(accountId);
         if(messagesOfAccount != null) {
             return new ResponseEntity<>(messagesOfAccount, HttpStatus.OK);
@@ -184,7 +193,7 @@ public class SocialMediaController {
      */
     @ExceptionHandler(InvalidInputException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public @ResponseBody String handleInvalidInput(InvalidInputException ex) {
+    public String handleInvalidInput(InvalidInputException ex) {
         return ex.getMessage();
     }
 }
